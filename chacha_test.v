@@ -132,7 +132,7 @@ fn test_chacha20_block() {
 	for c in vodcha.test_cases {
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
-		block := chacha20_block(key_bytes, c.counter, nonce_bytes) or { return }
+		block := chacha20_ietf_block(key_bytes, c.counter, nonce_bytes) or { return }
 		exp_bytes := hex2byte(c.output) or { return }
 
 		assert key_bytes.len == 32
@@ -153,7 +153,7 @@ fn test_chacha20_block_serialized() {
 	// println(s_nonce)
 	assert nonce_bytes.len == 12 // should 12
 	counter := u32(1)
-	block := chacha20_block(key_bytes, counter, nonce_bytes) or { return }
+	block := chacha20_ietf_block(key_bytes, counter, nonce_bytes) or { return }
 
 	expected_raw_bytes := '10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4ed2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e'
 	exp_bytes := hex2byte(expected_raw_bytes) or { return }

@@ -25,7 +25,7 @@ fn test_aead_chacha20_poly_encrypt() {
 	poly_key := '7bac2b252db447af09b67a55a4e955840ae1d6731075d9eb2a9375783ed553ff'
 	pkey_bytes := hex2byte(poly_key) or { return }
 
-	pkey := poly1305_key_generator(key_bytes, bnonce) or { return }
+	pkey := poly1305_key_gen(key_bytes, bnonce) or { return }
 	assert pkey == pkey_bytes
 
 	expected_ciphertext := 'd31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116'

@@ -62,12 +62,22 @@ pub fn poly1305_mac(msg []byte, key []byte) []byte {
 	return bignum_to_16_le_bytes(mut a)
 }
 
-// `poly1305_key_generator` generate poly1305 one time key using `chacha20_block` function
-// https://datatracker.ietf.org/doc/html/rfc8439#section-2.6
-// Generating the Poly1305 Key Using ChaCha20
-pub fn poly1305_key_generator(key []byte, nonce []byte) ?[]byte {
+// `poly1305_key_gen` generate poly1305 one time key using `chacha20_ietf_block` function if nonce was 96 bits, and using
+// xchacha20 support with derived key from hchacha function if provided nonce was 192 bits
+pub fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
 	_ = key[key_size-1]
+	_ = nonce.len in [nonce_size, nonce_size_x] // ensure nonce size is valid
 	counter := u32(0)
-	block := chacha20_block(key, counter, nonce) ?
-	return block[0..32]
+	if nonce.len == nonce_size_x {
+		mut cnonce := nonce[16..].clone()
+		subkey := hchacha20(key, nonce[0..16])
+		cnonce.prepend([byte(0x00), 0x00, 0x00, 0x00])
+		block := chacha20_ietf_block(subkey, counter, cnonce) ?
+		return block[0..32]
+	} else if nonce.len == nonce_size {
+		block := chacha20_ietf_block(key, counter, nonce) ?
+		return block[0..32]
+	} else {
+		return error("wrong nonce size")
+	}
 }

@@ -7,11 +7,11 @@ import encoding.binary
 import crypto.internal.subtle
 
 // 'aead_chacha20_poly_encrypt' encrypt the `plaintext` with `chacha20_ietf_encrypt` using one time key generated 
-// by `poly1305_key_generator` and then mac-ed by `poly1305_mac`
+// by `poly1305_key_gen` and then mac-ed by `poly1305_mac`
 fn aead_chacha20_poly_encrypt(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
 	_, _ = key[key_size-1], nonce[nonce_size-1]//bound early check
 
-	otk := poly1305_key_generator(key, nonce) ?
+	otk := poly1305_key_gen(key, nonce) ?
 	//ciphertext := chacha20_ietf_encrypt(key, u32(1), nonce, plaintext) ?
 	//add support to xchacha20
 	ciphertext := xchacha20_encrypt(key, nonce, plaintext, u32(1)) ?
@@ -28,11 +28,11 @@ fn aead_chacha20_poly_encrypt(aad []byte, key []byte, nonce []byte, plaintext []
 
 // `aead_chacha20_poly_decrypt` do opposite of encrypt
 fn aead_chacha20_poly_decrypt(aad []byte, key []byte, nonce []byte, ciphertext []byte) ?([]byte, []byte) {
-	otk := poly1305_key_generator(key, nonce) ?
+	otk := poly1305_key_gen(key, nonce) ?
 	
 	//plaintext := chacha20_ietf_encrypt(key, u32(1), nonce, ciphertext) ?
 	plaintext := xchacha20_encrypt(key, nonce, ciphertext, u32(1)) ?
-	
+
 	mut mac_data := pad16(aad)
 	ch := pad16(ciphertext)
 	mac_data << ch

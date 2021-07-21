@@ -59,22 +59,18 @@ fn hchacha20(key []byte, nonce []byte) []byte {
 // nonce was 24 bytes length, as specified
 fn xchacha20_encrypt(key []byte, nonce []byte, plaintext []byte, ctr u32) ?[]byte {
 	_ = key[..key_size]
-	match nonce.len {
-		nonce_size_x {
-			mut cnonce := nonce[16..24].clone()
-			subkey := hchacha20(key, nonce[0..16])
-			cnonce.prepend([byte(0x00), 0x00, 0x00, 0x00])
-			ciphertext := chacha20_ietf_encrypt(subkey, ctr, cnonce, plaintext) ?
+	if nonce.len >= nonce_size_x {
+		mut cnonce := nonce[16..24].clone()
+		subkey := hchacha20(key, nonce[0..16])
+		cnonce.prepend([byte(0x00), 0x00, 0x00, 0x00])
+		ciphertext := chacha20_ietf_encrypt(subkey, ctr, cnonce, plaintext) ?
 
-			return ciphertext
-		}
-		nonce_size {
-			ciphertext := chacha20_ietf_encrypt(key, ctr, nonce, plaintext) ?
-
-			return ciphertext
-		}
-		else {
-			panic("xchacha: wrong nonce size provided")
-		}
+		return ciphertext
+	} 
+	if nonce.len >= nonce_size && nonce.len < nonce_size_x {
+		ciphertext := chacha20_ietf_encrypt(key, ctr, nonce, plaintext) ?
+		return ciphertext
+		 
 	}
+	return error("Wronng nonce size")
 }

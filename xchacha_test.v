@@ -625,8 +625,10 @@ fn test_aead_poly_xchacha_encrypt() {
 	aad_bytes := hex2byte(aad) or {return}
 	plaintext_bytes := hex2byte(plaintext) or {return}
 	key_bytes := hex2byte(key) or { return }
-	nonce_bytes := hex2byte(nonce) or { return }
+	nonce_bytes := hex2byte(iv) or { return }
+
 	
+
 	ciphertext_bytes := hex2byte(ciphertext) or { return }
 	tag_bytes := hex2byte(tag) or {return}
 

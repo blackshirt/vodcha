@@ -11,19 +11,22 @@ import encoding.binary
 const (
 	key_size     = 32 // 256 bits size
 	nonce_size   = 12 // 96 bits size
-	nonce_size_x = 24 // 192 bits size, extended nonce size of chacha20, called xchacha20
-)
 
-const (
+	// 192 bits size, extended nonce size of chacha20, called xchacha20
+	// https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha-03
+	nonce_size_x = 24
+
+	// block size of chacha20
 	block_size = 64
 	buf_size   = block_size
 )
 
+
 // first of four words chacha20 state constant
 const (
 	chacha_c0  = u32(0x61707865)
-	chacha_c1 = u32(0x3320646e)
-	chacha_c2 = u32(0x79622d32)
+	chacha_c1  = u32(0x3320646e)
+	chacha_c2  = u32(0x79622d32)
 	chacha_c3  = u32(0x6b206574)
 )
 
@@ -88,18 +91,15 @@ fn inner_block(mut state [16]u32) [16]u32 {
 	return state
 }
 
-// `chacha20_block` generate block/key stream
-pub fn chacha20_block(key []byte, counter u32, nonce []byte) ?[]byte {
+// `chacha20_ietf_block` generate block/key stream from 256 bits key and 96 bits nonce size as specified in rfc
+fn chacha20_ietf_block(key []byte, counter u32, nonce []byte) ?[]byte {
 	if key.len != vodcha.key_size {
 		return error('chacha20 wrong key size')
 	}
-	//if nonce.len != vodcha.nonce_size {
-	//	return error('chacha20 wrong nonce size')
-	//}
-	//if nonce.len != nonce_size || nonce.len != nonce_size_x {
-	//	return error("chacha20: unsupported nonce size, provide with valid nonce size")
-	//}
-
+	if nonce.len != vodcha.nonce_size {
+		return error('chacha20 wrong nonce size')
+	}
+	
 	// setup state
 	s0, s1, s2, s3 := vodcha.chacha_c0, vodcha.chacha_c1, vodcha.chacha_c2, vodcha.chacha_c3
 	s4 := binary.little_endian_u32(key[0..4])
@@ -141,7 +141,7 @@ pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []
 	mut encrypted_message := []byte{}
 
 	for i := 0; i < plaintext.len / block_size; i++ {
-		key_stream := chacha20_block(key, counter + u32(i), nonce) or { return none }
+		key_stream := chacha20_ietf_block(key, counter + u32(i), nonce) or { return none }
 		block := plaintext[i * block_size..(i + 1) * block_size]
 
 		// encrypted_message += block ^ key_stream
@@ -153,7 +153,7 @@ pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []
 	}
 	if plaintext.len % block_size != 0 {
 		j := plaintext.len / block_size
-		key_stream := chacha20_block(key, counter + u32(j), nonce) or { return none }
+		key_stream := chacha20_ietf_block(key, counter + u32(j), nonce) or { return none }
 		block := plaintext[j * block_size..]
 
 		// encrypted_message += (block^key_stream)[0..len(plaintext)%block_size]
@@ -175,7 +175,7 @@ pub fn chacha20_decrypt(key []byte, counter u32, nonce []byte, ciphertext []byte
 	mut decrypted_message := []byte{}
 
 	for i := 0; i < ciphertext.len / block_size; i++ {
-		key_stream := chacha20_block(key, counter + u32(i), nonce) or { return none }
+		key_stream := chacha20_ietf_block(key, counter + u32(i), nonce) or { return none }
 		block := ciphertext[i * block_size..(i + 1) * block_size]
 
 		mut dst := []byte{len: block.len}
@@ -185,7 +185,7 @@ pub fn chacha20_decrypt(key []byte, counter u32, nonce []byte, ciphertext []byte
 	}
 	if ciphertext.len % block_size != 0 {
 		j := ciphertext.len / block_size
-		key_stream := chacha20_block(key, counter + u32(j), nonce) or { return none }
+		key_stream := chacha20_ietf_block(key, counter + u32(j), nonce) or { return none }
 		block := ciphertext[j * block_size..]
 
 		mut dst := []byte{len: block.len}
