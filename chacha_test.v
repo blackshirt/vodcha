@@ -1,6 +1,8 @@
 // chacha block and encrypt unit test
 module vodcha
 
+import benchmark
+
 struct BlockCase {
 	key     string
 	nonce   string
@@ -103,8 +105,11 @@ const (
 )
 
 fn test_quarter_round() {
+	mut bench := benchmark.start()
+	// your code section 1 ...
+	//time.sleep(1500 * time.millisecond)
 	a, b, c, d := quarter_round(0x11111111, 0x01020304, 0x9b8d6f43, 0x01234567)
-
+	bench.measure('quarter_round')
 	assert a == 0xea2a92f4
 	assert b == 0xcb1cf8ce
 	assert c == 0x4581472e
@@ -161,7 +166,7 @@ fn test_chacha20_encrypt() {
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
 		plaintext_bytes := hex2byte(c.plaintext) or { return }
-		encrypted_message := chacha20_encrypt(key_bytes, c.counter, nonce_bytes, plaintext_bytes) or {
+		encrypted_message := chacha20_ietf_encrypt(key_bytes, c.counter, nonce_bytes, plaintext_bytes) or {
 			return
 		}
 

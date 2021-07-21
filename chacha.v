@@ -9,9 +9,9 @@ import encoding.binary
 
 // https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
 const (
-	key_size     = 32 // 256 bits key
-	nonce_size   = 12 // 6 bits key
-	nonce_size_x = 24 // varian extended nonce size xchacha20
+	key_size     = 32 // 256 bits size
+	nonce_size   = 12 // 96 bits size
+	nonce_size_x = 24 // 192 bits size, extended nonce size of chacha20, called xchacha20
 )
 
 const (
@@ -93,9 +93,12 @@ pub fn chacha20_block(key []byte, counter u32, nonce []byte) ?[]byte {
 	if key.len != vodcha.key_size {
 		return error('chacha20 wrong key size')
 	}
-	if nonce.len != vodcha.nonce_size {
-		return error('chacha20 wrong nonce size')
-	}
+	//if nonce.len != vodcha.nonce_size {
+	//	return error('chacha20 wrong nonce size')
+	//}
+	//if nonce.len != nonce_size || nonce.len != nonce_size_x {
+	//	return error("chacha20: unsupported nonce size, provide with valid nonce size")
+	//}
 
 	// setup state
 	s0, s1, s2, s3 := vodcha.chacha_c0, vodcha.chacha_c1, vodcha.chacha_c2, vodcha.chacha_c3
@@ -130,9 +133,9 @@ pub fn chacha20_block(key []byte, counter u32, nonce []byte) ?[]byte {
 	return serialize(state)
 }
 
-// `chacha20_encrypt` generate encrypted message from plaintext using chacha 20 round algorithm
+// `chacha20_ietf_encrypt` generate encrypted message from plaintext using chacha 20 round algorithm
 // specified in rfc8439
-pub fn chacha20_encrypt(key []byte, counter u32, nonce []byte, plaintext []byte) ?[]byte {
+pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []byte) ?[]byte {
 	//bound early check
 	_, _ = key[key_size-1], nonce[nonce_size-1]
 	mut encrypted_message := []byte{}

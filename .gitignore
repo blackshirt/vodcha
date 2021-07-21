@@ -9,6 +9,7 @@ dist/
 
 #vlang docs folder
 _docs/
+bench/
 
 # Compiled Java class files
 *.class

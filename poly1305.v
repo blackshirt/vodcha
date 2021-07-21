@@ -66,7 +66,7 @@ pub fn poly1305_mac(msg []byte, key []byte) []byte {
 // https://datatracker.ietf.org/doc/html/rfc8439#section-2.6
 // Generating the Poly1305 Key Using ChaCha20
 pub fn poly1305_key_generator(key []byte, nonce []byte) ?[]byte {
-	_, _ = key[key_size-1], nonce[nonce_size-1] // early bound check
+	_ = key[key_size-1]
 	counter := u32(0)
 	block := chacha20_block(key, counter, nonce) ?
 	return block[0..32]
