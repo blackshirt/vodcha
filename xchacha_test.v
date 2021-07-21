@@ -30,7 +30,7 @@ fn test_xchacha_encrypt_vector_test_a321() {
 	nonce_bytes := hex2byte(nonce) or { return }
 	ciphertext_bytes := hex2byte(ciphertext) or { return }
 
-	encrypted_message := xchacha20_encrypt(key_bytes, nonce_bytes, plaintext_bytes, counter) or {
+	encrypted_message := chacha20_encrypt_extended(key_bytes, counter, nonce_bytes, plaintext_bytes) or {
 		return
 	}
 
@@ -69,7 +69,7 @@ fn test_xchacha_encrypt_vector_test_a322() {
 	nonce_bytes := hex2byte(nonce) or { return }
 	ciphertext_bytes := hex2byte(ciphertext) or { return }
 
-	encrypted_message := xchacha20_encrypt(key_bytes, nonce_bytes, plaintext_bytes, counter) or {
+	encrypted_message := chacha20_encrypt_extended(key_bytes, counter, nonce_bytes, plaintext_bytes) or {
 		return
 	}
 
@@ -84,7 +84,7 @@ struct XChachaCase {
 }
 
 fn test_xchacha_encrypt_vector_test() {
-	for c in vodcha.xchacha_vector_test {
+	for c in xchacha_vector_test {
 		counter := u32(0)
 		plaintext_bytes := hex2byte(c.input) or { return }
 		key_bytes := hex2byte(c.key) or { return }
@@ -93,8 +93,7 @@ fn test_xchacha_encrypt_vector_test() {
 		nonce_bytes := hex2byte(c.nonce) or { return }
 		ciphertext_bytes := hex2byte(c.output) or { return }
 
-		encrypted_message := xchacha20_encrypt(key_bytes, nonce_bytes, plaintext_bytes,
-			counter) or { return }
+		encrypted_message := chacha20_encrypt(key_bytes, counter, nonce_bytes, plaintext_bytes) or { return }
 
 		assert encrypted_message == ciphertext_bytes
 	}
@@ -613,9 +612,7 @@ fn test_aead_poly_xchacha_encrypt() {
 	aad := '50515253c0c1c2c3c4c5c6c7'
 	key := '808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f'
 	iv := '404142434445464748494a4b4c4d4e4f5051525354555657'
-	fixed := '00000000'
-
-	nonce := fixed+iv
+	
 	ciphertext := 'bd6d179d3e83d43b9576579493c0e939572a1700252bfaccbed2902c21396cbb\
 	731c7f1b0b4aa6440bf3a82f4eda7e39ae64c6708c54c216cb96b72e1213b452\
 	2f8c9ba40db5d945b11b69b982c1bb9e3f3fac2bc369488f76b2383565d3fff9\

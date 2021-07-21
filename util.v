@@ -1,6 +1,20 @@
 module vodcha
 
+import crypto.rand
 import encoding.binary
+
+// generate random key 
+pub fn gen_random_key() ?[]byte {
+	return rand.read(key_size)
+}
+
+//generate random nonce with size
+pub fn gen_random_nonce(size int) ?[]byte {
+	if size !in [nonce_size, nonce_size_x] {
+		return error("get_random_nonce: wrong nonce size $size provided, allowed value was 12 or 24")
+	}
+	return rand.read(size)
+}
 
 //`serialize` serialize chacha20 state (array of 16 u32) to array of bytes
 fn serialize(state [16]u32) []byte {

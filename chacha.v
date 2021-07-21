@@ -91,17 +91,17 @@ fn inner_block(mut state [16]u32) [16]u32 {
 	return state
 }
 
-// `chacha20_ietf_block` generate block/key stream from 256 bits key and 96 bits nonce size as specified in rfc
-fn chacha20_ietf_block(key []byte, counter u32, nonce []byte) ?[]byte {
-	if key.len != vodcha.key_size {
+// `chacha20_block_generic` generate block/key stream from 256 bits key and 96 bits nonce 
+fn chacha20_block_generic(key []byte, counter u32, nonce []byte) ?[]byte {
+	if key.len != key_size {
 		return error('chacha20 wrong key size')
 	}
-	if nonce.len != vodcha.nonce_size {
+	if nonce.len != nonce_size {
 		return error('chacha20 wrong nonce size')
 	}
 	
 	// setup state
-	s0, s1, s2, s3 := vodcha.chacha_c0, vodcha.chacha_c1, vodcha.chacha_c2, vodcha.chacha_c3
+	s0, s1, s2, s3 := chacha_c0, chacha_c1, chacha_c2, chacha_c3
 	s4 := binary.little_endian_u32(key[0..4])
 	s5 := binary.little_endian_u32(key[4..8])
 	s6 := binary.little_endian_u32(key[8..12])
@@ -133,15 +133,15 @@ fn chacha20_ietf_block(key []byte, counter u32, nonce []byte) ?[]byte {
 	return serialize(state)
 }
 
-// `chacha20_ietf_encrypt` generate encrypted message from plaintext using chacha 20 round algorithm
+// `chacha20_encrypt_generic` generate encrypted message from plaintext using chacha 20 round algorithm
 // specified in rfc8439
-pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []byte) ?[]byte {
+pub fn chacha20_encrypt_generic(key []byte, counter u32, nonce []byte, plaintext []byte) ?[]byte {
 	//bound early check
 	_, _ = key[key_size-1], nonce[nonce_size-1]
 	mut encrypted_message := []byte{}
 
 	for i := 0; i < plaintext.len / block_size; i++ {
-		key_stream := chacha20_ietf_block(key, counter + u32(i), nonce) or { return none }
+		key_stream := chacha20_block_generic(key, counter + u32(i), nonce) or { return none }
 		block := plaintext[i * block_size..(i + 1) * block_size]
 
 		// encrypted_message += block ^ key_stream
@@ -153,7 +153,7 @@ pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []
 	}
 	if plaintext.len % block_size != 0 {
 		j := plaintext.len / block_size
-		key_stream := chacha20_ietf_block(key, counter + u32(j), nonce) or { return none }
+		key_stream := chacha20_block_generic(key, counter + u32(j), nonce) or { return none }
 		block := plaintext[j * block_size..]
 
 		// encrypted_message += (block^key_stream)[0..len(plaintext)%block_size]
@@ -168,14 +168,14 @@ pub fn chacha20_ietf_encrypt(key []byte, counter u32, nonce []byte, plaintext []
 	return encrypted_message
 }
 
-// `chacha20_decrypt` do opposite of encrypt
-pub fn chacha20_decrypt(key []byte, counter u32, nonce []byte, ciphertext []byte) ?[]byte {
+// `chacha20_decrypt_generic` do opposite of encrypt
+pub fn chacha20_decrypt_generic(key []byte, counter u32, nonce []byte, ciphertext []byte) ?[]byte {
 	//bound early check
 	_, _ = key[key_size-1], nonce[nonce_size-1]
 	mut decrypted_message := []byte{}
 
 	for i := 0; i < ciphertext.len / block_size; i++ {
-		key_stream := chacha20_ietf_block(key, counter + u32(i), nonce) or { return none }
+		key_stream := chacha20_block_generic(key, counter + u32(i), nonce) or { return none }
 		block := ciphertext[i * block_size..(i + 1) * block_size]
 
 		mut dst := []byte{len: block.len}
@@ -185,7 +185,7 @@ pub fn chacha20_decrypt(key []byte, counter u32, nonce []byte, ciphertext []byte
 	}
 	if ciphertext.len % block_size != 0 {
 		j := ciphertext.len / block_size
-		key_stream := chacha20_ietf_block(key, counter + u32(j), nonce) or { return none }
+		key_stream := chacha20_block_generic(key, counter + u32(j), nonce) or { return none }
 		block := ciphertext[j * block_size..]
 
 		mut dst := []byte{len: block.len}

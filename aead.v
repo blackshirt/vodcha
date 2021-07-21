@@ -1,49 +1,13 @@
-// AEAD Construction using chacha20 and poly1305
-// as in https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
+// AEAD Construction using chacha20 (or xchacha20) and poly1305
 
 module vodcha
 
 import encoding.binary
 import crypto.internal.subtle
 
-// 'aead_chacha20_poly_encrypt' encrypt the `plaintext` with `chacha20_ietf_encrypt` using one time key generated 
-// by `poly1305_key_gen` and then mac-ed by `poly1305_mac`
-fn aead_chacha20_poly_encrypt(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
-	_, _ = key[key_size-1], nonce[nonce_size-1]//bound early check
 
-	otk := poly1305_key_gen(key, nonce) ?
-	//ciphertext := chacha20_ietf_encrypt(key, u32(1), nonce, plaintext) ?
-	//add support to xchacha20
-	ciphertext := xchacha20_encrypt(key, nonce, plaintext, u32(1)) ?
-
-	mut mac_data := pad16(aad)
-	ch := pad16(ciphertext)
-	mac_data << ch
-	mac_data << num_to_8_le_bytes(u64(aad.len))
-	mac_data << num_to_8_le_bytes(u64(ciphertext.len))
-	tag := poly1305_mac(mac_data, otk)
-	return ciphertext, tag
-}
-
-
-// `aead_chacha20_poly_decrypt` do opposite of encrypt
-fn aead_chacha20_poly_decrypt(aad []byte, key []byte, nonce []byte, ciphertext []byte) ?([]byte, []byte) {
-	otk := poly1305_key_gen(key, nonce) ?
-	
-	//plaintext := chacha20_ietf_encrypt(key, u32(1), nonce, ciphertext) ?
-	plaintext := xchacha20_encrypt(key, nonce, ciphertext, u32(1)) ?
-
-	mut mac_data := pad16(aad)
-	ch := pad16(ciphertext)
-	mac_data << ch
-	mac_data << num_to_8_le_bytes(u64(aad.len))
-	mac_data << num_to_8_le_bytes(u64(ciphertext.len))
-	tag := poly1305_mac(mac_data, otk)
-	return plaintext, tag
-}
-
-// `encrypt_and_tag` encrypt the plaintext using chacha20-poly1305 and return ciphertext and the tag
-pub fn encrypt_and_tag(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
+// `encrypt_and_buildtag` encrypt the plaintext using chacha20-poly1305 and return ciphertext and the tag
+pub fn encrypt_and_buildtag(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
 	ciphertext, tag := aead_chacha20_poly_encrypt(aad, key, nonce, plaintext) ?
 	return ciphertext, tag
 }
@@ -59,6 +23,40 @@ pub fn decrypt_and_verify(key []byte, nonce []byte, ciphertext []byte, mac []byt
 	return plaintext
 }
 
+// 'aead_chacha20_poly_encrypt' encrypt the `plaintext` with `chacha20_encrypt` using one time key generated 
+// by `poly1305_key_gen` and then mac-ed by `poly1305_mac`
+fn aead_chacha20_poly_encrypt(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
+	_ = key[key_size-1] //bound early check
+
+	otk := poly1305_key_gen(key, nonce) ?
+	//ciphertext := chacha20_encrypt_generic(key, u32(1), nonce, plaintext) ?
+	//add support to xchacha20
+	ciphertext := chacha20_encrypt(key, u32(1), nonce, plaintext) ?
+
+	mut mac_data := pad16(aad)
+	ch := pad16(ciphertext)
+	mac_data << ch
+	mac_data << num_to_8_le_bytes(u64(aad.len))
+	mac_data << num_to_8_le_bytes(u64(ciphertext.len))
+	tag := poly1305_mac(mac_data, otk)
+	return ciphertext, tag
+}
+
+// `aead_chacha20_poly_decrypt` do opposite of encrypt
+fn aead_chacha20_poly_decrypt(aad []byte, key []byte, nonce []byte, ciphertext []byte) ?([]byte, []byte) {
+	otk := poly1305_key_gen(key, nonce) ?
+	
+	//plaintext := chacha20_encrypt_generic(key, u32(1), nonce, ciphertext) ?
+	plaintext := chacha20_encrypt(key, u32(1), nonce, ciphertext) ?
+
+	mut mac_data := pad16(aad)
+	ch := pad16(ciphertext)
+	mac_data << ch
+	mac_data << num_to_8_le_bytes(u64(aad.len))
+	mac_data << num_to_8_le_bytes(u64(ciphertext.len))
+	tag := poly1305_mac(mac_data, otk)
+	return plaintext, tag
+}
 
 fn num_to_8_le_bytes(num u64) []byte {
 	mut buf := []byte{len: 8}

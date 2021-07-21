@@ -129,10 +129,10 @@ fn test_quarter_round_on_chacha_state() {
 }
 
 fn test_chacha20_block() {
-	for c in vodcha.test_cases {
+	for c in test_cases {
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
-		block := chacha20_ietf_block(key_bytes, c.counter, nonce_bytes) or { return }
+		block := chacha20_block_generic(key_bytes, c.counter, nonce_bytes) or { return }
 		exp_bytes := hex2byte(c.output) or { return }
 
 		assert key_bytes.len == 32
@@ -153,7 +153,7 @@ fn test_chacha20_block_serialized() {
 	// println(s_nonce)
 	assert nonce_bytes.len == 12 // should 12
 	counter := u32(1)
-	block := chacha20_ietf_block(key_bytes, counter, nonce_bytes) or { return }
+	block := chacha20_block_generic(key_bytes, counter, nonce_bytes) or { return }
 
 	expected_raw_bytes := '10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4ed2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e'
 	exp_bytes := hex2byte(expected_raw_bytes) or { return }
@@ -161,12 +161,12 @@ fn test_chacha20_block_serialized() {
 }
 
 fn test_chacha20_encrypt() {
-	for c in vodcha.encryption_test_cases {
+	for c in encryption_test_cases {
 		// println(c.title)
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
 		plaintext_bytes := hex2byte(c.plaintext) or { return }
-		encrypted_message := chacha20_ietf_encrypt(key_bytes, c.counter, nonce_bytes, plaintext_bytes) or {
+		encrypted_message := chacha20_encrypt_generic(key_bytes, c.counter, nonce_bytes, plaintext_bytes) or {
 			return
 		}
 
@@ -178,14 +178,14 @@ fn test_chacha20_encrypt() {
 }
 
 
-fn test_chacha20_decrypt() {
-	for c in vodcha.encryption_test_cases {
+fn test_chacha20_decrypt_generic() {
+	for c in encryption_test_cases {
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
 		
 		ciphertext := hex2byte(c.output) or {return}
 
-		output_plaintext := chacha20_decrypt(key_bytes, c.counter, nonce_bytes, ciphertext) or {return}
+		output_plaintext := chacha20_decrypt_generic(key_bytes, c.counter, nonce_bytes, ciphertext) or {return}
 
 		expected_decrypted_message := hex2byte(c.plaintext) or { return }
 		assert output_plaintext == expected_decrypted_message

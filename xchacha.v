@@ -1,9 +1,13 @@
+// Building block for eXtended ChaCha20
+// Its based on https://datatracker.ietf.org/doc/html/draft-arciszewski-xchacha-03
+// so, its maybe outdated...
 module vodcha
 
 import encoding.binary
 
+// `hchacha20` was intermediary step to build xchacha20 and initialized the same way as the ChaCha20 cipher, 
+// except hchacha20 use a 128-bit (16 byte) nonce and has no counter to derive subkey
 fn hchacha20(key []byte, nonce []byte) []byte {
-	// hchacha use first 16 bytes of nonce  and key to derive subkey
 	// early bound check
 	_, _ = key[..key_size], nonce[..16]
 
@@ -56,21 +60,31 @@ fn hchacha20(key []byte, nonce []byte) []byte {
 	return out
 }
 
-// nonce was 24 bytes length, as specified
-fn xchacha20_encrypt(key []byte, nonce []byte, plaintext []byte, ctr u32) ?[]byte {
+// `chacha20_encrypt` was a thin wrapper around two supported nonce size, chacha20 with 96 bits 
+// and xchacha20 with 192 bits nonce  
+pub fn chacha20_encrypt(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte {
 	_ = key[..key_size]
-	if nonce.len >= nonce_size_x {
-		mut cnonce := nonce[16..24].clone()
-		subkey := hchacha20(key, nonce[0..16])
-		cnonce.prepend([byte(0x00), 0x00, 0x00, 0x00])
-		ciphertext := chacha20_ietf_encrypt(subkey, ctr, cnonce, plaintext) ?
-
+	if nonce.len == nonce_size_x {
+		ciphertext := chacha20_encrypt_extended(key, ctr, nonce, plaintext) ?
 		return ciphertext
 	} 
-	if nonce.len >= nonce_size && nonce.len < nonce_size_x {
-		ciphertext := chacha20_ietf_encrypt(key, ctr, nonce, plaintext) ?
+	if nonce.len == nonce_size {
+		ciphertext := chacha20_encrypt_generic(key, ctr, nonce, plaintext) ?
 		return ciphertext
-		 
 	}
-	return error("Wronng nonce size")
+	return error("Wrong nonce size : $nonce.len")
+}
+
+// eXtended nonce size (xchacha20) encrypt function 
+// as specified in https://datatracker.ietf.org/doc/html/draft-arciszewski-xchacha-03
+fn chacha20_encrypt_extended(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte {
+	if nonce.len != nonce_size_x {
+		return error("xchacha: wrong x nonce size: $nonce.len")
+	}
+	subkey := hchacha20(key, nonce[0..16])
+	mut cnonce := nonce[16..24].clone()
+	cnonce.prepend([byte(0x00), 0x00, 0x00, 0x00])
+	ciphertext := chacha20_encrypt_generic(subkey, ctr, cnonce, plaintext) ?
+
+	return ciphertext
 }
