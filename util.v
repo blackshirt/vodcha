@@ -17,7 +17,8 @@ pub fn gen_random_nonce(size int) ?[]byte {
 }
 
 //`serialize` serialize chacha20 state (array of 16 u32) to array of bytes
-fn serialize(state [16]u32) []byte {
+fn serialize(state []u32) []byte {
+	_ = state[15]
 	mut res := []byte{len: 4 * state.len}
 	for idx, val in state {
 		binary.little_endian_put_u32(mut res[idx * 4..idx * 4 + 4], val)
@@ -26,9 +27,9 @@ fn serialize(state [16]u32) []byte {
 }
 
 //`unserialize` do opposite of `serialize`
-fn unserialize(mut res []byte) [16]u32 {
+fn unserialize(mut res []byte) []u32 {
 	_ = res[63]
-	mut out := [16]u32{}
+	mut out := []u32{len:16}
 	for i := 0; i < 16; i++ {
 		binary.little_endian_put_u32(mut res[i * 4..i * 4 + 4], out[i])
 	}
