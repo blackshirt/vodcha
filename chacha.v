@@ -75,9 +75,7 @@ fn quarter_round(a u32, b u32, c u32, d u32) (u32, u32, u32, u32) {
 }
 
 fn quarter_round_on_chacha_state(mut state []u32, idx1 u32, idx2 u32, idx3 u32, idx4 u32) {
-	_ = state[15]
-	state[idx1], state[idx2], state[idx3], state[idx4] = quarter_round(state[idx1], state[idx2],
-		state[idx3], state[idx4])
+	state[idx1], state[idx2], state[idx3], state[idx4] = quarter_round(state[idx1], state[idx2], state[idx3], state[idx4])
 }
 
 fn inner_block(mut state []u32) []u32 {
@@ -103,6 +101,7 @@ fn chacha20_block_generic(key []byte, counter u32, nonce []byte) ?[]byte {
 	}
 	
 	// setup state
+	
 	s0, s1, s2, s3 := chacha_c0, chacha_c1, chacha_c2, chacha_c3
 	s4 := binary.little_endian_u32(key[0..4])
 	s5 := binary.little_endian_u32(key[4..8])
@@ -118,9 +117,9 @@ fn chacha20_block_generic(key []byte, counter u32, nonce []byte) ?[]byte {
 	s13 := binary.little_endian_u32(nonce[0..4])
 	s14 := binary.little_endian_u32(nonce[4..8])
 	s15 := binary.little_endian_u32(nonce[8..12])
-
+	
 	mut state := [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15]
-	mut initial_state := state[..state.len]
+	mut initial_state := state[..state.len].clone()
 
 	for i := 0; i < 10; i++ {
 		state = inner_block(mut state)
