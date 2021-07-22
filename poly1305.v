@@ -1,6 +1,6 @@
 /*
 Poly1305 Message Authentication Code (MAC)
-based on RFC 843
+based on RFC 8439
 */
 
 module vodcha
@@ -34,11 +34,11 @@ pub fn poly1305_mac(msg []byte, key []byte) []byte {
 		a = (r * a) % cp
 	}
 	a += s
-	return bignum_to_16_le_bytes(mut a)
+	return bignum_to_16_le_bytes(a)
 }
 
 // `poly1305_key_gen` generate poly1305 one time key using `chacha20_block_generic` if nonce was 96 bits, or
-// using extended nonce version of chacha20 when its nonce was 192 bits 
+// using extended nonce version, xchacha20, when its nonce was 192 bits 
 pub fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
 	_ = key[key_size-1]
 	_ = nonce.len in [nonce_size, nonce_size_x] // ensure nonce size is valid
@@ -68,13 +68,21 @@ fn le_bytes_to_bignum(data []byte) big.Number {
 }
 
 // Convert number to 16 bytes in little endian format
-fn bignum_to_16_le_bytes(mut num big.Number) []byte {
+fn ori_bignum_to_16_le_bytes(mut num big.Number) []byte {
 	mut ret := []byte{len: 16}
 	for i in 0 .. 16 {
+		//BUG WARN: its contains some way reducing a bignum to an int, and then to a byte
+		//is there viable alternative for this ?
 		ret[i] = byte(big.b_and(num, big.from_int(0xff)).int())
 		num = num.rshift(8)
 	}
 	return ret
+}
+
+fn bignum_to_16_le_bytes(num big.Number) []byte {
+	mut res := num.bytes()
+	res.trim(16)
+	return res
 }
 
 // `clamp_bignum` clamp the number required for poly1305 operation

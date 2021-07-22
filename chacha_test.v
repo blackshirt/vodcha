@@ -116,18 +116,6 @@ fn test_quarter_round() {
 	assert d == 0x5881c4bb
 }
 
-fn test_quarter_round_on_chacha_state() {
-	state := [u32(0x879531e0), u32(0xc5ecf37d), u32(0x516461b1), u32(0xc9a62f8a), u32(0x44c20ef3),
-		u32(0x3390af7f), u32(0xd9fc690b), u32(0x2a5f714c), 0x53372767, 0xb00a5631, 0x974c541a,
-		0x359e9963, 0x5c971061, 0x3d631689, 0x2098d9d6, 0x91dbd320]!
-
-	a, b, c, d := quarter_round(state[2], state[7], state[8], state[13])
-	assert a == 0xbdb886dc
-	assert b == 0xcfacafd2
-	assert c == 0xe46bea80
-	assert d == 0xccc07c79
-}
-
 fn test_chacha20_block() {
 	for c in test_cases {
 		key_bytes := hex2byte(c.key) or { return }
