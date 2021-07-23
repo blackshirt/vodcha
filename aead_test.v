@@ -78,26 +78,27 @@ fn test_chacha20_poly_encrypt_decrypt() {
 
 	plaintext := 'ChaCha20 and Poly1305'.bytes()
 
-	ciphertext, tag := encrypt_and_buildtag(aad, key, nonce, plaintext) or { return }
+	ciphertext, tag := encrypt_and_build_tag(aad, key, nonce, plaintext) or { return }
 
-	pltext2 := decrypt_and_verify(key, nonce, ciphertext, tag, aad) or { return }
+	pltext2 := decrypt_and_verify_tag(aad, key, nonce, ciphertext, tag) or { return }
 
 	assert plaintext == pltext2
 }
 
 fn test_aead_encrypt_decrypt_with_random_generator() {
-	key := gen_random_key() or { return }
-	nonce := gen_random_nonce(24) or { return }
+	key := random_key() or { return }
+	nonce := random_nonce(12) or { return }
 	aad := 'i miss you'.bytes()
 
 	plaintext := 'vodcha was xchacha poly1305 aead in v-lang'.bytes()
 
-	cipher, tag := encrypt_and_buildtag(aad, key, nonce, plaintext) or { return }
+	cipher, tag := encrypt_and_build_tag(aad, key, nonce, plaintext) or { return }
 
-	msg := decrypt_and_verify(key, nonce, cipher, tag, aad) or { return }
+	msg := decrypt_and_verify_tag(aad, key, nonce, cipher, tag) or { return }
 
 	assert plaintext == msg
 }
+
 
 //see provided vector test data below
 fn test_aead_chacha20_poly_encrypt_from_libressl_vector_test() {
@@ -109,13 +110,45 @@ fn test_aead_chacha20_poly_encrypt_from_libressl_vector_test() {
 		out_bytes := hex2byte(c.out) or { return }
 		tag_bytes := hex2byte(c.tag) or { return }
 
-		cipher, tag := encrypt_and_buildtag(ad_bytes, key_bytes, nonce_bytes, inp_bytes) or {
+		cipher, tag := encrypt_and_build_tag(ad_bytes, key_bytes, nonce_bytes, inp_bytes) or {
 			return
 		}
 		assert cipher == out_bytes
 		assert tag == tag_bytes
 	}
 }
+
+fn test_aead_encrypt_and_buildtag_from_libressl_vector_test() {
+	for c in aead_cases {
+		key_bytes := hex2byte(c.key) or { return }
+		ad_bytes := hex2byte(c.ad) or { return }
+		nonce_bytes := hex2byte(c.nonce) or { return }
+		inp_bytes := hex2byte(c.inp) or { return }
+		out_bytes := hex2byte(c.out) or { return }
+		tag_bytes := hex2byte(c.tag) or { return }
+		mut ch := new_cipher(key_bytes, nonce_bytes) or {return}
+		cipher, tag := ch.aead_encrypt_and_build_tag(ad_bytes, inp_bytes) or {return}
+		assert cipher == out_bytes
+		assert tag == tag_bytes
+	}
+}
+
+fn test_aead_decrypt_and_verify_tag_from_libressl_vector_test() {
+	for c in aead_cases {
+		key_bytes := hex2byte(c.key) or { return }
+		ad_bytes := hex2byte(c.ad) or { return }
+		nonce_bytes := hex2byte(c.nonce) or { return }
+		inp_bytes := hex2byte(c.inp) or { return }
+		out_bytes := hex2byte(c.out) or { return }
+		tag_bytes := hex2byte(c.tag) or { return }
+		mut ch := new_cipher(key_bytes, nonce_bytes) or {return}
+		cipher, mac := ch.aead_encrypt_and_build_tag(ad_bytes, inp_bytes) or {return}
+		plain  := ch.aead_decrypt_and_verify_tag(ad_bytes, cipher, mac) or {return}
+		
+		assert plain == inp_bytes
+	}
+}
+
 
 struct AeadCase {
 	key   string

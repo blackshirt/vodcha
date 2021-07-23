@@ -116,15 +116,15 @@ fn test_quarter_round() {
 	assert d == 0x5881c4bb
 }
 
-fn test_chacha20_block() {
+fn test_chacha20_block_function() {
 	for c in test_cases {
 		key_bytes := hex2byte(c.key) or { return }
 		nonce_bytes := hex2byte(c.nonce) or { return }
 		block := chacha20_block_generic(key_bytes, c.counter, nonce_bytes) or { return }
 		exp_bytes := hex2byte(c.output) or { return }
 
-		assert key_bytes.len == 32
-		assert nonce_bytes.len == 12
+		//assert key_bytes.len == 32
+		//assert nonce_bytes.len == 12
 		assert block.len == 64
 		assert block == exp_bytes
 	}
@@ -133,13 +133,12 @@ fn test_chacha20_block() {
 fn test_chacha20_block_serialized() {
 	key := '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
 	key_bytes := hex2byte(key) or { return }
-	assert key_bytes.len == 32
+	//assert key_bytes.len == 32
 
 	nonce := '000000090000004a00000000'
 	nonce_bytes := hex2byte(nonce) or { return }
 
-	// println(s_nonce)
-	assert nonce_bytes.len == 12 // should 12
+	//assert nonce_bytes.len == 12 // should 12
 	counter := u32(1)
 	block := chacha20_block_generic(key_bytes, counter, nonce_bytes) or { return }
 
@@ -159,8 +158,8 @@ fn test_chacha20_encrypt() {
 		}
 
 		exp_bytes := hex2byte(c.output) or { return }
-		assert key_bytes.len == 32
-		assert nonce_bytes.len == 12
+		//assert key_bytes.len == 32
+		//assert nonce_bytes.len == 12
 		assert encrypted_message == exp_bytes
 	}
 }
@@ -174,6 +173,44 @@ fn test_chacha20_decrypt_generic() {
 		ciphertext := hex2byte(c.output) or {return}
 
 		output_plaintext := chacha20_decrypt_generic(key_bytes, c.counter, nonce_bytes, ciphertext) or {return}
+
+		expected_decrypted_message := hex2byte(c.plaintext) or { return }
+		assert output_plaintext == expected_decrypted_message
+	}
+}
+
+fn test_chacha20_cipher_encrypt() {
+	for c in encryption_test_cases {
+		// println(c.title)
+		key_bytes := hex2byte(c.key) or { return }
+		nonce_bytes := hex2byte(c.nonce) or { return }
+
+		plaintext_bytes := hex2byte(c.plaintext) or { return }
+		// := chacha20_encrypt_generic(key_bytes, c.counter, nonce_bytes,
+		//	plaintext_bytes) or { return }
+
+		mut ch := new_cipher(key_bytes, nonce_bytes) or {return}
+		ch.counter = c.counter 
+		encrypted_message := ch.encrypt(plaintext_bytes) or {return}
+		exp_bytes := hex2byte(c.output) or { return }
+		//assert key_bytes.len == 32
+		//assert nonce_bytes.len == 12
+		//assert encrypted_message.len == exp_bytes.len 
+		assert encrypted_message == exp_bytes
+	}
+}
+
+fn test_chacha20_cipher_decrypt() {
+	for c in encryption_test_cases {
+		key_bytes := hex2byte(c.key) or { return }
+		nonce_bytes := hex2byte(c.nonce) or { return }
+		
+		ciphertext := hex2byte(c.output) or {return}
+		
+		mut ch := new_cipher(key_bytes, nonce_bytes) or {return}
+		ch.counter = c.counter 
+
+		output_plaintext := ch.decrypt(ciphertext) or {return}
 
 		expected_decrypted_message := hex2byte(c.plaintext) or { return }
 		assert output_plaintext == expected_decrypted_message

@@ -12,3 +12,4 @@
 - Add test to xchacha20
 - Split initialization step of chacha20 state
 - Change poly1305 utility to use big.Number.bytes()
+- Struct based cipher operation

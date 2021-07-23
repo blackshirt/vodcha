@@ -1,14 +1,14 @@
 module vodcha
 
-fn test_gen_random_key() {
-	key := gen_random_key() or {return}
+fn test_generate_random_key() {
+	key := random_key() or {return}
 	assert key.len == key_size
 }
 
-fn test_get_random_nonce() {
-	ch20_nonce := gen_random_nonce(12) or {return}
+fn test_generate_random_nonce() {
+	ch20_nonce := random_nonce(12) or {return}
 	assert ch20_nonce.len == nonce_size
-	x20_nonce := gen_random_nonce(24) or {return}
+	x20_nonce := random_nonce(24) or {return}
 	assert x20_nonce.len == nonce_size_x	
 }
 

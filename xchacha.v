@@ -60,21 +60,6 @@ fn hchacha20(key []byte, nonce []byte) []byte {
 	return out
 }
 
-// `chacha20_encrypt` was a thin wrapper around two supported nonce size, chacha20 with 96 bits 
-// and xchacha20 with 192 bits nonce  
-pub fn chacha20_encrypt(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte {
-	_ = key[..key_size]
-	if nonce.len == nonce_size_x {
-		ciphertext := chacha20_encrypt_extended(key, ctr, nonce, plaintext) ?
-		return ciphertext
-	} 
-	if nonce.len == nonce_size {
-		ciphertext := chacha20_encrypt_generic(key, ctr, nonce, plaintext) ?
-		return ciphertext
-	}
-	return error("Wrong nonce size : $nonce.len")
-}
-
 // eXtended nonce size (xchacha20) encrypt function 
 // as specified in https://datatracker.ietf.org/doc/html/draft-arciszewski-xchacha-03
 fn chacha20_encrypt_extended(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte {

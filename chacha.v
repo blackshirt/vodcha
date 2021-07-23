@@ -5,6 +5,7 @@ module vodcha
 import math
 import math.bits
 import crypto.cipher
+import crypto.internal.subtle
 import encoding.binary
 
 // https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
@@ -29,6 +30,61 @@ const (
 	chacha_c2  = u32(0x79622d32)
 	chacha_c3  = u32(0x6b206574)
 )
+
+struct Cipher {
+	// key
+	key     []byte
+	nonce   []byte
+	mut:
+	counter u32
+}
+
+pub fn new_chiper_from_string(key string, nonce string) ?Cipher {
+	bytes_key := key.bytes()
+	bytes_nonce := nonce.bytes()
+
+	return new_cipher(bytes_key, bytes_nonce)
+}
+
+pub fn new_cipher(key []byte, nonce []byte) ?Cipher{
+	if key.len != key_size {
+		return error("error wrong key size provided ")
+	}
+	if nonce.len !in [nonce_size, nonce_size_x] {
+		return error("error nonce size provided")
+	}
+	c := Cipher{
+		key: key
+		nonce: nonce
+	}
+	return c
+}
+
+// encrypt result in encrypted plaintext with chacha20 stream cipher
+fn (c Cipher) encrypt(plaintext []byte) ?[]byte {
+	return chacha20_encrypt(c.key, c.counter, c.nonce, plaintext)
+}
+
+// decrypt decrypt the ciphertext that was result from chacha20 encryption
+fn (c Cipher) decrypt(ciphertext []byte) ?[]byte {
+	return chacha20_encrypt(c.key, c.counter, c.nonce, ciphertext)
+}
+
+// `chacha20_encrypt` was a thin wrapper around two supported nonce size, chacha20 with 96 bits 
+// and xchacha20 with 192 bits nonce  
+fn chacha20_encrypt(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte {
+	_ = key[..key_size]
+	if nonce.len == nonce_size_x {
+		ciphertext := chacha20_encrypt_extended(key, ctr, nonce, plaintext) ?
+		return ciphertext
+	} 
+	if nonce.len == nonce_size {
+		ciphertext := chacha20_encrypt_generic(key, ctr, nonce, plaintext) ?
+		return ciphertext
+	}
+	return error("Wrong nonce size : $nonce.len")
+}
+
 
 // core chacha20 round function
 fn quarter_round(a u32, b u32, c u32, d u32) (u32, u32, u32, u32) {
@@ -167,6 +223,9 @@ fn chacha20_decrypt_generic(key []byte, counter u32, nonce []byte, ciphertext []
 		block := ciphertext[i * block_size..(i + 1) * block_size]
 
 		mut dst := []byte{len: block.len}
+		if subtle.inexact_overlap(block, key_stream) {
+			panic("chacha: subtle inexact overlap")
+		}
 		_ := cipher.xor_bytes(mut dst, block, key_stream)
 
 		decrypted_message << dst

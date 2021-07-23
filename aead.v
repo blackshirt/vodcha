@@ -6,18 +6,33 @@ import encoding.binary
 import crypto.internal.subtle
 
 
-// `encrypt_and_buildtag` encrypt the plaintext using chacha20-poly1305 and return ciphertext and the tag
-pub fn encrypt_and_buildtag(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
-	ciphertext, tag := aead_chacha20_poly_encrypt(aad, key, nonce, plaintext) ?
-	return ciphertext, tag
+// generate aead data from plaintext input and authenticated additional data aad build with 
+// primitive of (x)chacha20 stream cipher and poly1305 mac 
+// its fundamentally same functionality with function version below
+pub fn (mut c Cipher) aead_encrypt_and_build_tag(aad []byte, plaintext []byte) ?([]byte, []byte) {
+	return aead_chacha20_poly_encrypt(aad, c.key, c.nonce, plaintext)
 }
 
-// `decrypt_and_verify` doing decryption of ciphertext and verify the tag's validity
-pub fn decrypt_and_verify(key []byte, nonce []byte, ciphertext []byte, mac []byte, aad []byte) ?[]byte {
+// decrypt ciphertext and verify tag with mac
+pub fn (mut c Cipher) aead_decrypt_and_verify_tag(aad []byte, ciphertext []byte, mac []byte) ?[]byte {
+	plaintext, tag := aead_chacha20_poly_decrypt(aad, c.key, c.nonce, ciphertext) ?
+
+	if subtle.constant_time_compare(tag, mac) != 1 {
+		return error('Bad tag')
+	}
+	return plaintext
+}
+
+// `encrypt_and_build_tag` encrypt the plaintext using chacha20-poly1305 and return ciphertext and the tag
+pub fn encrypt_and_build_tag(aad []byte, key []byte, nonce []byte, plaintext []byte) ?([]byte, []byte) {
+	return aead_chacha20_poly_encrypt(aad, key, nonce, plaintext)
+}
+
+// `decrypt_and_verify_tag` doing decryption of ciphertext and verify the tag's validity
+pub fn decrypt_and_verify_tag(aad []byte, key []byte, nonce []byte, ciphertext []byte, mac []byte) ?[]byte {
 	plaintext, tag := aead_chacha20_poly_decrypt(aad, key, nonce, ciphertext) ?
 
-	res := subtle.constant_time_compare(tag, mac)
-	if res != 1 {
+	if subtle.constant_time_compare(tag, mac) != 1 {
 		return error('Bad tag')
 	}
 	return plaintext

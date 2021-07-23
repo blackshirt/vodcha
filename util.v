@@ -4,12 +4,12 @@ import crypto.rand
 import encoding.binary
 
 // generate random key 
-pub fn gen_random_key() ?[]byte {
+pub fn random_key() ?[]byte {
 	return rand.read(key_size)
 }
 
 //generate random nonce with size
-pub fn gen_random_nonce(size int) ?[]byte {
+pub fn random_nonce(size int) ?[]byte {
 	if size !in [nonce_size, nonce_size_x] {
 		return error("get_random_nonce: wrong nonce size $size provided, allowed value was 12 or 24")
 	}

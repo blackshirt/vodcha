@@ -16,7 +16,7 @@ const (
 
 // `poly1305_mac` was poly1305 mac algorithms specified in 
 // https://datatracker.ietf.org/doc/html/rfc8439#section-2.5.1
-pub fn poly1305_mac(msg []byte, key []byte) []byte {
+fn poly1305_mac(msg []byte, key []byte) []byte {
 	_ = key[key_size-1] // bound early check
 	mut r := le_bytes_to_bignum(key[0..16])
 	r = clamp_bignum(r)
@@ -39,7 +39,7 @@ pub fn poly1305_mac(msg []byte, key []byte) []byte {
 
 // `poly1305_key_gen` generate poly1305 one time key using `chacha20_block_generic` if nonce was 96 bits, or
 // using extended nonce version, xchacha20, when its nonce was 192 bits 
-pub fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
+fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
 	_ = key[key_size-1]
 	_ = nonce.len in [nonce_size, nonce_size_x] // ensure nonce size is valid
 	counter := u32(0)
