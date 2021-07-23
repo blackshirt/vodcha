@@ -33,8 +33,9 @@ and then import in your module
 `import blackshirt.vodcha`
 
 
-This module only export a few high level function/method for AEAD construction 
-based on chacha20 (xchacha20) stream cipher and Poly1305 MAC, and several convenient function/methods
+This module only exports a few high level function/methods for AEAD construction 
+using chacha20 (xchacha20) stream cipher and Poly1305 MAC primitives, 
+and several convenient function/methods to make life easier.
 
 
 ## Example
@@ -42,36 +43,38 @@ based on chacha20 (xchacha20) stream cipher and Poly1305 MAC, and several conven
 import blackshirt.vodcha
 
 fn main() {
-	//provides random key, or generates one
+	// provides with 32 bytes random key, or generates one
 	key := vodcha.random_key() or {return}
 
-	//provides nonce with specific size, or generates one
+	// provides nonce with specific size, 
+	// allowed nonce size was 12 for chacha20 and 24 for xchacha20
+	// or generates one using `random_nonce(size)
 	nonce := vodcha.random_nonce(24) or {return}
 	
-	// create chacha/xchacha stream cipher 
-	cipher := vodcha.new_cipher(key, nonce)
+	// create chacha20/xchacha20 stream cipher 
+	mut cipher := vodcha.new_cipher(key, nonce) or {return}
 	
-	//provide additional data
+	//provides arbitrary-length additional authenticated data
 	aad := 'test data'.bytes()
 
-	//input plaintext to encrypt and authenticated
+	// input message to encrypt and authenticated
 	input := 'vodcha was an aead-xchacha20-poly1305 library in vlang'.bytes()
 	
-	//encrypt and gets encrypted text and tag
-	ciphertext, tag := cipher.aead_encrypt_and_build_tag(aad, input)
-	//or using normal function operation
+	// do encrypt and gets encrypted text and authenticated tag
+	ciphertext, tag := cipher.aead_encrypt_and_build_tag(aad, input) or {return}
+	// or using normal function operation
 	//ciphertext, tag := vodcha.encrypt_and_build_tag(aad, key, nonce, input) or {return}
 	
 	println("Ciphertext: $ciphertext.bytestr()")
 	println("Tag: $tag.bytestr()")
 	
 	//decryption 
-	original_msg := cipher.decrypt_and_verify_tag(aad, ciphertext, tag) or { return }
+	original_msg := cipher.aead_decrypt_and_verify_tag(aad, ciphertext, tag) or { return }
 	
-	//or using function based operation
+	//or using normal function based operation
 	//original_msg := vodcha.decrypt_and_verify_tag(aad, key, nonce, ciphertext, tag) or { return }
 	
-	println("Original msg: $input")
+	println("Original msg: $input.bytestr()")
 	println("Decrypted from ciphertext: $original_msg.bytestr()")
 }
 ```
