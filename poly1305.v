@@ -39,7 +39,7 @@ pub fn poly1305_mac(msg []byte, key []byte) []byte {
 
 // `poly1305_key_gen` generate poly1305 one time key using `chacha20_block_generic` if nonce was 96 bits, or
 // using extended nonce version, xchacha20, when its nonce was 192 bits 
-fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
+pub fn poly1305_key_gen(key []byte, nonce []byte) ?[]byte {
 	_ = key[key_size-1]
 	_ = nonce.len in [nonce_size, nonce_size_x] // ensure nonce size is valid
 	counter := u32(0)
