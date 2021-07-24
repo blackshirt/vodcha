@@ -39,6 +39,7 @@ struct Cipher {
 	counter u32
 }
 
+// convenient wrapper for `new_cipher` accept key and nonce in string
 pub fn new_chiper_from_string(key string, nonce string) ?Cipher {
 	bytes_key := key.bytes()
 	bytes_nonce := nonce.bytes()
@@ -46,6 +47,7 @@ pub fn new_chiper_from_string(key string, nonce string) ?Cipher {
 	return new_cipher(bytes_key, bytes_nonce)
 }
 
+// create new chacha20 cipher instance from key and nonce
 pub fn new_cipher(key []byte, nonce []byte) ?Cipher{
 	if key.len != key_size {
 		return error("error wrong key size provided ")
@@ -61,12 +63,15 @@ pub fn new_cipher(key []byte, nonce []byte) ?Cipher{
 }
 
 // encrypt result in encrypted plaintext with chacha20 stream cipher
-fn (c Cipher) encrypt(plaintext []byte) ?[]byte {
+// based on nonce size provided in cipher instance, if size was 12 bytes, 
+// its standard ietf chacha20 cipher encryption, otherwise if size was 24 bytes,
+// its constructed using extended xchacha20 mechanism using `hchacha20` function
+pub fn (c Cipher) encrypt(plaintext []byte) ?[]byte {
 	return chacha20_encrypt(c.key, c.counter, c.nonce, plaintext)
 }
 
 // decrypt decrypt the ciphertext that was result from chacha20 encryption
-fn (c Cipher) decrypt(ciphertext []byte) ?[]byte {
+pub fn (c Cipher) decrypt(ciphertext []byte) ?[]byte {
 	return chacha20_encrypt(c.key, c.counter, c.nonce, ciphertext)
 }
 
@@ -86,7 +91,8 @@ fn chacha20_encrypt(key []byte, ctr u32, nonce []byte, plaintext []byte) ?[]byte
 }
 
 
-// core chacha20 round function
+// quarter_round was core chacha20 round function, its operates on quartet unsigned integer
+// by permforming AXR (add, xor, rotate) operation on this number
 fn quarter_round(a u32, b u32, c u32, d u32) (u32, u32, u32, u32) {
 	mut ax := a
 	mut bx := b
@@ -147,6 +153,8 @@ fn initialize_chacha_state(key []byte, counter u32, nonce []byte) ?[]u32 {
 
 
 // `chacha20_block_generic` generate block/key stream from 256 bits key and 96 bits nonce 
+//  ChaCha block function transforms a ChaCha state by running multiple quarter rounds, aka 20 round.
+//  The output is 64 random-looking bytes.
 fn chacha20_block_generic(key []byte, counter u32, nonce []byte) ?[]byte {
 	// setup chacha state, checking was done on initialization step
 	mut state := initialize_chacha_state(key, counter, nonce) ?

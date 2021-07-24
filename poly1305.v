@@ -16,7 +16,7 @@ const (
 
 // `poly1305_mac` was poly1305 mac algorithms specified in 
 // https://datatracker.ietf.org/doc/html/rfc8439#section-2.5.1
-fn poly1305_mac(msg []byte, key []byte) []byte {
+pub fn poly1305_mac(msg []byte, key []byte) []byte {
 	_ = key[key_size-1] // bound early check
 	mut r := le_bytes_to_bignum(key[0..16])
 	r = clamp_bignum(r)
