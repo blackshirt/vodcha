@@ -1,0 +1,14 @@
+module curve
+
+import gmp
+
+
+fn test_gmp_cswap() {
+	num1 := gmp.from_str('34426434033919594451155107781188821651316167215306631574996226621102155684838')
+	num2 := gmp.from_str('8883857351183929894090759386610649319417338800022198945255395922347792736741')
+
+	r1, r2 := cswap(gmp.from_u64(1), num1, num2)
+
+	assert gmp.cmp(r1, num2) == 0
+	assert gmp.cmp(r2, num1) == 0
+}

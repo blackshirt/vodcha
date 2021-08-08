@@ -1,0 +1,15 @@
+x25519 and x448 in V-language
+-----------------------------
+
+This module provides two function specified in RFC 7748 Elliptic Curves for Security, 
+in the form x25519 and x448 function for elliptic curves over prime fields.
+For arithmatic operations, this implementation relies on `v_gmp` module from VincentLaisney.
+It's availables at https://github.com/VincentLaisney/v_gmp. It was V-lang binding  
+to `GMP`, The GNU Multiple Precision Arithmetic Library that mostly available 
+on all platform.
+
+NOTE: Use this with your own risk, not fully tested, and you've been warned!
+============================================================================
+
+MIT License
+Copyright (c) 2021 blackshirt
