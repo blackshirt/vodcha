@@ -1,5 +1,6 @@
-// This is thin wrapper around two supported curve function, x25519 for 128-bit security level
-// and x448 for 224-bit security level
+//This is thin wrapper around two supported curve function, x25519 for 128-bit security level
+//and x448 for 224-bit security level.
+//Just look at curve25519.v (or curve448.v) files for the detail
 module curve
 
 import gmp

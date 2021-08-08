@@ -91,3 +91,36 @@ fn test_x448_scalar_multiply() {
 
 	assert gmp.cmp(expected_result, result) == 0
 }
+
+
+// Update: its being fixed with `v_gmp` being updated with memory management updated, see
+// https://github.com/VincentLaisney/v_gmp/commit/f348524bb68a052abcfd74ac8102e7ab9f0d8b0a
+// You can run test with `-gc boehm` flag being activated, but `-autofree` still suffers error
+// Just uncomment this test to be included in test run
+/*
+fn test_x448_iteration() {
+	iteration1 := hex2byte('3f482c8a9f19b01e6c46ee9711d9dc14fd4bf67af30765c2ae2b846a4d23a8cd0db897086239492caf350b51f833868b9bc2b3bca9cf4113') or {return}
+	iteration1000 := hex2byte('aa3b4749d55b9daf1e5b00288826c467274ce3ebbdd5c17b975e09d4af6c67cf10d087202db88286e2b79fceea3ec353ef54faa26e219f38') or {return}
+	iteration1000000 := hex2byte('077f453681caca3693198420bbe515cae0002472519b3e67661a7e89cab94695c8f4bcd66e61b9b9c946da8d524de3d69bd9d9d66b997e37') or {return}
+
+	mut k := hex2byte('0500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000') or {return}
+	mut u := k.clone()
+	//mut r := []byte{}
+
+	for i in 0..1000000 {
+		println("start i: $i")
+		tmp_k := k.clone()
+		r := x448(mut k, mut u)
+		unsafe {u = tmp_k}
+		unsafe {k = r}
+		if i == 0 {
+			assert k == iteration1
+		} else if i == 999 {
+			assert k == iteration1000
+		} else if i == 999999 {
+			assert k == iteration1000000
+		}
+		
+	}
+}
+*/

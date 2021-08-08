@@ -1,3 +1,4 @@
+//Test vector for x25519 curve function
 module curve
 
 import gmp
@@ -131,7 +132,11 @@ fn test_x25519_from_rfc_test_vector_2() {
 // WARNING: This test still leads to memory leak, and maybe blown up your system, hanging up your OS
 // with unresponsible state even with gc boehm flag `v -gc boehm -stats curve_test.v`, 
 // its still being killed by os oom killer
-// For this time, skip this test until the code fixed
+
+// Update: its being fixed with `v_gmp` being updated with memory management updated, see
+// https://github.com/VincentLaisney/v_gmp/commit/f348524bb68a052abcfd74ac8102e7ab9f0d8b0a
+// You can run test with `-gc boehm` flag being activated, but `-autofree` still suffers error
+// Just uncomment this test to be included in test run
 /*
 fn test_x25519_iteration() {
 	iteration1 := hex2byte('422c8e7a6227d7bca1350b3e2bb7279f7897b87bb6854b783c60e80311ae3079') or {return}
@@ -156,11 +161,8 @@ fn test_x25519_iteration() {
 		} else if i == 999999 {
 			assert k == iteration1000000
 		}
-		unsafe {tmp_k.free()}
-		//unsafe {r.free()}
+		
 	}
-	unsafe {k.free()}
-	unsafe {u.free()}
-	unsafe {r.free()}
 }
 */
+

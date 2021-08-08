@@ -1,3 +1,4 @@
+
 module curve
 
 import gmp
@@ -42,7 +43,7 @@ fn x25519_decode_little_endian(b []byte) gmp.Bigint {
 		gmp.mul_2exp(mut val, gmp.from_u64(b[i]), u64(8 * i))
 		sum = sum + val
 	}
-	gmp.clear(mut val)
+	//gmp.clear(mut val)
 	
 	return sum
 }
@@ -54,7 +55,6 @@ fn x25519_encode_x_coordinate(mut u gmp.Bigint) []byte {
 	// u = u % cvp_25519
 	gmp.mod(mut u, u, curve.cvp_25519)
 
-	// return ''.join([chr((u >> 8*i) & 0xff) for i in range((bits+7)/8)])
 	//placed this allocation out of for loop and call gmp.clear() to release it
 	mut val := gmp.new()
 	for i in 0 .. arr.len {
@@ -65,11 +65,10 @@ fn x25519_encode_x_coordinate(mut u gmp.Bigint) []byte {
 		//gmp.and(mut d, val, gmp.from_u64(0xff))
 		//arr[i] = byte(d.u64())
 
-		//changes to single Bigint `val` allocated before
 		gmp.and(mut val, val, gmp.from_u64(0xff))
 		arr[i] = byte(val.u64())
 	}
-	gmp.clear(mut val)
+	//gmp.clear(mut val)
 	
 	return arr
 }
@@ -91,7 +90,7 @@ fn x25519_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 	mut swap := gmp.from_u64(0)
 
 
-	//allocate bigint needed value outside the loop
+	//allocate bigint vars needed for operation outside the loop
 	mut k_t := gmp.new()
 	mut val := gmp.new()
 	mut aa := gmp.new()
@@ -119,11 +118,11 @@ fn x25519_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 		mut a := (x_2 + z_2) % curve.cvp_25519
 		//mut aa := gmp.new()
 		//eliminate a allocation
-		gmp.powm(mut aa, a, two, curve.cvp_25519)
+		gmp.powm_sec(mut aa, a, two, curve.cvp_25519)
 
 		mut b := (x_2 - z_2) % curve.cvp_25519
 		//mut bb := gmp.new()
-		gmp.powm(mut bb, b, two, curve.cvp_25519)
+		gmp.powm_sec(mut bb, b, two, curve.cvp_25519)
 
 		mut e := (aa - bb) % curve.cvp_25519
 		mut c := (x_3 + z_3) % curve.cvp_25519
@@ -132,15 +131,15 @@ fn x25519_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 		mut da := (d * a) % curve.cvp_25519
 		mut cb := (c * b) % curve.cvp_25519
 
-		gmp.powm(mut x_3, (da + cb) % curve.cvp_25519, two, curve.cvp_25519)
+		gmp.powm_sec(mut x_3, (da + cb) % curve.cvp_25519, two, curve.cvp_25519)
 		//mut xx := gmp.new()
-		gmp.powm(mut xx, (da - cb) % curve.cvp_25519, two, curve.cvp_25519)
+		gmp.powm_sec(mut xx, (da - cb) % curve.cvp_25519, two, curve.cvp_25519)
 
 		//z_3 = (x_1 * xx) % curve.cvp_25519
-		z_3 = (x_1 * xx) % curve.cvp_25519 //x_1 not defined through `u.clone(), directly using `u`
+		z_3 = (x_1 * xx) % curve.cvp_25519 
 		x_2 = (aa * bb) % curve.cvp_25519
 		z_2 = e * ((aa + (curve.a24_25519 * e) % curve.cvp_25519) % curve.cvp_25519)
-		
+		/*
 		defer {
 			gmp.clear(mut a)
 			gmp.clear(mut b)
@@ -151,17 +150,20 @@ fn x25519_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 			gmp.clear(mut cb)
 			
 		}
-		
+		*/
 	}
 	x_2, x_3 = cswap(swap, x_2, x_3)
 	z_2, z_3 = cswap(swap, z_2, z_3)
 	//mut zz := gmp.new()
 	//gmp.powm(mut zz, z_2, curve.cvp_25519 - two, curve.cvp_25519)
-	gmp.powm(mut val, z_2, curve.cvp_25519 - two, curve.cvp_25519)
+	gmp.powm_sec(mut val, z_2, curve.cvp_25519 - two, curve.cvp_25519)
 
 	//res := (x_2 * zz) % curve.cvp_25519
 	res := (x_2 * val) % curve.cvp_25519
-	
+
+	// its being fixed with new `gmp.v` of updated `v_gmp, so its doesn't need call .clear() manually
+	// just pass `-gc boehm` flag to v command
+	/*
 	defer {
 		gmp.clear(mut k_t)
 		gmp.clear(mut val)
@@ -178,6 +180,7 @@ fn x25519_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 		//gmp.clear(mut swap) //this .clear call leads to double free bug, look at swap = k_t
 	}
 	
-	
+	*/
+
 	return res
 }

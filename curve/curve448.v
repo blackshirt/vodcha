@@ -74,32 +74,43 @@ fn x448_encode_x_coordinate(mut u gmp.Bigint) []byte {
 }
 
 fn x448_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
-	x_1 := u.clone()
+	mut x_1 := u.clone()
 	mut x_2 := gmp.from_u64(1)
 	mut z_2 := gmp.from_u64(0)
 	mut x_3 := u.clone()
 	mut z_3 := gmp.from_u64(1)
 	mut swap := gmp.from_u64(0)
 
+
+	//allocate bigint vars needed for operation outside the loop
+	mut k_t := gmp.new()
+	mut val := gmp.new()
+	mut aa := gmp.new()
+	mut bb := gmp.new()
+	mut xx := gmp.new()
+
 	for t := 447; t >= 0; t-- {
-		mut k_t := gmp.new()
-		mut val := gmp.new()
+		//mut k_t := gmp.new()
+		//mut val := gmp.new()
 		gmp.tdiv_q_2exp(mut val, k, u64(t)) // right shift
+		//gmp.and(mut k_t, val, gmp.from_u64(1))
 		gmp.and(mut k_t, val, gmp.from_u64(1))
-		mut cs := gmp.new()
-		gmp.xor(mut cs, swap, k_t)
-		swap = cs
+		//mut cs := gmp.new()
+		//gmp.xor(mut cs, swap, k_t)
+		gmp.xor(mut val, swap, k_t)
+		//swap = cs
+		swap = val
 
 		x_2, x_3 = cswap(swap, x_2, x_3)
 		z_2, z_3 = cswap(swap, z_2, z_3)
 		swap = k_t
 
 		a := (x_2 + z_2) % curve.cvp_448
-		mut aa := gmp.new()
+		//mut aa := gmp.new()
 		gmp.powm(mut aa, a, two, curve.cvp_448)
 
 		b := (x_2 - z_2) % curve.cvp_448
-		mut bb := gmp.new()
+		//mut bb := gmp.new()
 		gmp.powm(mut bb, b, two, curve.cvp_448)
 
 		e := (aa - bb) % curve.cvp_448
@@ -110,7 +121,7 @@ fn x448_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 		cb := (c * b) % curve.cvp_448
 
 		gmp.powm(mut x_3, (da + cb) % curve.cvp_448, two, curve.cvp_448)
-		mut xx := gmp.new()
+		//mut xx := gmp.new()
 		gmp.powm(mut xx, (da - cb) % curve.cvp_448, two, curve.cvp_448)
 
 		z_3 = (x_1 * xx) % curve.cvp_448
@@ -119,9 +130,10 @@ fn x448_scalar_multiply(k gmp.Bigint, u gmp.Bigint) gmp.Bigint {
 	}
 	x_2, x_3 = cswap(swap, x_2, x_3)
 	z_2, z_3 = cswap(swap, z_2, z_3)
-	mut zz := gmp.new()
-	gmp.powm(mut zz, z_2, curve.cvp_448 - two, curve.cvp_448)
+	//mut zz := gmp.new()
+	//gmp.powm(mut zz, z_2, curve.cvp_448 - two, curve.cvp_448)
+	gmp.powm(mut val, z_2, curve.cvp_448 - two, curve.cvp_448)
 
-	res := (x_2 * zz) % curve.cvp_448
+	res := (x_2 * val) % curve.cvp_448
 	return res
 }
