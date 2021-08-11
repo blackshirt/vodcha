@@ -16,5 +16,5 @@ for production, not fully tested (even the test getting passed, see the test).
 Use this with your own risk and you've been warned!
 
 
-@2021 blackshirt
-----------------
+<span style="color:red">@2021 blackshirt</span>
+_______________________________________________
